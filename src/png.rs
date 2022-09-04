@@ -4,7 +4,6 @@ use crate::Result;
 use crate::chunk::Chunk;
 
 use std::fmt::Display;
-use std::io::Read;
 
 struct Png {
     header: [u8; 8],
@@ -45,8 +44,6 @@ impl Png {
             .find(|c| c.chunk_type().to_string() == *chunk_type)
     }
     fn as_bytes(&self) -> Vec<u8> {
-        let x = self.header.iter();
-
         let chunks_bytes: Vec<u8> = self.chunks().iter().flat_map(|c| c.as_bytes()).collect();
 
         self.header
