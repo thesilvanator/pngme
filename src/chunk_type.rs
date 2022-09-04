@@ -1,5 +1,5 @@
-use std::{fmt::Display, str::FromStr};
 use crate::{Error, Result};
+use std::{fmt::Display, str::FromStr};
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct ChunkType {
@@ -44,7 +44,9 @@ impl TryFrom<[u8; 4]> for ChunkType {
     fn try_from(value: [u8; 4]) -> Result<Self> {
         for v in value {
             if !v.is_ascii_uppercase() && !v.is_ascii_lowercase() {
-                return Result::Err(Self::Error::from("Ascii error"));
+                return Result::Err(Self::Error::from(
+                    "Ascii error when creating chunktype from u8;4",
+                ));
             }
         }
 

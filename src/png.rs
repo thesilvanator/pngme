@@ -4,6 +4,7 @@ use crate::Result;
 use crate::chunk::Chunk;
 
 use std::fmt::Display;
+use std::io::Read;
 
 struct Png {
     header: [u8; 8],
@@ -22,7 +23,15 @@ impl Png {
         self.chunks.push(chunk);
     }
     fn remove_chunk(&mut self, chunk_type: &str) -> Result<Chunk> {
-        unimplemented!()
+        let pos = self
+            .chunks
+            .iter()
+            .position(|c| c.chunk_type().to_string() == *chunk_type);
+
+        match pos {
+            Some(i) => Result::Ok(self.chunks.remove(i)),
+            None => Result::Err(Error::from("Couldn't find chunk")),
+        }
     }
     fn header(&self) -> &[u8; 8] {
         &self.header
@@ -31,12 +40,19 @@ impl Png {
         &self.chunks[..]
     }
     fn chunk_by_type(&self, chunk_type: &str) -> Option<&Chunk> {
-        unimplemented!()
+        self.chunks
+            .iter()
+            .find(|c| c.chunk_type().to_string() == *chunk_type)
     }
     fn as_bytes(&self) -> Vec<u8> {
+        let x = self.header.iter();
+
+        let chunks_bytes: Vec<u8> = self.chunks().iter().flat_map(|c| c.as_bytes()).collect();
+
         self.header
-            .into_iter()
-            .chain(self.chunks().iter().flat_map(|c| c.as_bytes()))
+            .iter()
+            .chain(chunks_bytes.iter())
+            .copied()
             .collect()
     }
 }
@@ -49,13 +65,16 @@ impl TryFrom<&[u8]> for Png {
             return Result::Err(Error::from("Bad png header"));
         }
 
-        let start: usize = 8;
-        let end: usize = 8;
+        let mut index: usize = 8;
+        let mut chunks: Vec<Chunk> = Vec::new();
 
-        loop {
-            let c = Chunk::try_from(value);
+        while index < value.len() {
+            let c = Chunk::try_from(&value[index..])?;
+            index += 4 + c.length() as usize + 4 + 4;
+            chunks.push(c);
         }
-        todo!()
+
+        Result::Ok(Png::from_chunks(chunks))
     }
 }
 

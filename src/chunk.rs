@@ -4,6 +4,7 @@ use std::fmt::Display;
 
 use crc::Crc;
 
+#[derive(Debug)]
 pub struct Chunk {
     chunk_type: ChunkType,
     data: Vec<u8>,
@@ -12,7 +13,6 @@ pub struct Chunk {
 
 impl Chunk {
     pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Chunk {
-
         let crc = Crc::<u32>::new(&crc::CRC_32_ISO_HDLC);
         let mut dig = crc.digest();
         dig.update(&chunk_type.bytes());
@@ -68,17 +68,27 @@ impl TryFrom<&[u8]> for Chunk {
     type Error = Error;
 
     fn try_from(value: &[u8]) -> Result<Self> {
-        let data_len = u32::from_be_bytes(value[..4].try_into().unwrap());
-        let ct: ChunkType =
-            ChunkType::try_from(<[u8; 4]>::try_from(&value[4..8]).unwrap()).unwrap();
+        let data_len = u32::from_be_bytes(
+            value[..4]
+                .try_into()
+                .expect("Could get chunk data len as u32 from slice"),
+        ) as usize;
 
-        let data = Vec::from(&value[8..(data_len + 8) as usize]);
-        let crc = u32::from_be_bytes(value[(data_len + 8) as usize..].try_into().unwrap());
+        let ct: ChunkType = ChunkType::try_from(
+            <[u8; 4]>::try_from(&value[4..8]).expect("Couldn't get chunk type from slice"),
+        )?;
+
+        let data = Vec::from(&value[8..data_len + 8]);
+        let crc = u32::from_be_bytes(
+            value[data_len + 8..data_len+12]
+                .try_into()
+                .expect("Couldn't get crc bytes from slice"),
+        );
 
         let chunk = Chunk::new(ct, data);
 
         if chunk.crc() != crc {
-            return Result::Err(Error::from("crc error"));
+            return Result::Err(Error::from("crc doesn't match"));
         }
 
         Result::Ok(chunk)
