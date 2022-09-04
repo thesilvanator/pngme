@@ -5,23 +5,23 @@ use crate::chunk::Chunk;
 
 use std::fmt::Display;
 
-struct Png {
+pub struct Png {
     header: [u8; 8],
     chunks: Vec<Chunk>,
 }
 
 impl Png {
     pub const STANDARD_HEADER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
-    fn from_chunks(chunks: Vec<Chunk>) -> Png {
+    pub fn from_chunks(chunks: Vec<Chunk>) -> Png {
         Png {
             header: Self::STANDARD_HEADER,
             chunks,
         }
     }
-    fn append_chunk(&mut self, chunk: Chunk) {
+    pub fn append_chunk(&mut self, chunk: Chunk) {
         self.chunks.push(chunk);
     }
-    fn remove_chunk(&mut self, chunk_type: &str) -> Result<Chunk> {
+    pub fn remove_chunk(&mut self, chunk_type: &str) -> Result<Chunk> {
         let pos = self
             .chunks
             .iter()
@@ -32,18 +32,18 @@ impl Png {
             None => Result::Err(Error::from("Couldn't find chunk")),
         }
     }
-    fn header(&self) -> &[u8; 8] {
+    pub fn header(&self) -> &[u8; 8] {
         &self.header
     }
-    fn chunks(&self) -> &[Chunk] {
+    pub fn chunks(&self) -> &[Chunk] {
         &self.chunks[..]
     }
-    fn chunk_by_type(&self, chunk_type: &str) -> Option<&Chunk> {
+    pub fn chunk_by_type(&self, chunk_type: &str) -> Option<&Chunk> {
         self.chunks
             .iter()
             .find(|c| c.chunk_type().to_string() == *chunk_type)
     }
-    fn as_bytes(&self) -> Vec<u8> {
+    pub fn as_bytes(&self) -> Vec<u8> {
         let chunks_bytes: Vec<u8> = self.chunks().iter().flat_map(|c| c.as_bytes()).collect();
 
         self.header
@@ -77,8 +77,8 @@ impl TryFrom<&[u8]> for Png {
 
 impl Display for Png {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for chunk in &self.chunks {
-            write!(f, "chunk with data: {}", chunk)?;
+        for (i,chunk) in self.chunks.iter().enumerate() {
+            write!(f, "chunk {i}: {}\n", chunk)?;
         }
 
         std::fmt::Result::Ok(())

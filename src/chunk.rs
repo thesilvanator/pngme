@@ -97,11 +97,16 @@ impl TryFrom<&[u8]> for Chunk {
 
 impl Display for Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let data = match self.data_as_string() {
+            Ok(s) => s,
+            Err(_) => format!("Binary data with size: {}", self.length()),
+        };
+
         write!(
             f,
-            "chunk with type: {} and message: {}",
+            "chunk with type: \"{}\" and message: \"{}\"",
             self.chunk_type,
-            self.data_as_string().unwrap()
+            data
         )
     }
 }

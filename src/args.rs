@@ -10,11 +10,11 @@ use std::path::PathBuf;
 #[clap(author, version, about, long_about = None)]
 pub struct Cli {
     #[clap(subcommand)]
-    command: Commands,
+    pub command: Commands,
 }
 
 #[derive(Subcommand)]
-enum Commands {
+pub enum Commands {
     /// Encode a message into a png chunk
     Encode {
         /// Path to png to encode into
